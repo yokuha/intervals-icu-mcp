@@ -1,18 +1,18 @@
-<!-- mcp-name: io.github.hhopke/intervals-icu-mcp -->
+<!-- mcp-name: io.github.yokuha/intervals-icu-mcp -->
 
 # Intervals.icu MCP Server
 
-![intervals-icu-mcp demo](https://raw.githubusercontent.com/hhopke/intervals-icu-mcp/main/docs/demo.gif)
+![intervals-icu-mcp demo](https://raw.githubusercontent.com/yokuha/intervals-icu-mcp/main/docs/demo.gif)
 
 A Model Context Protocol (MCP) server for Intervals.icu integration. Access your training data, wellness metrics, and performance analysis through Claude, ChatGPT, and other LLMs.
 
-> Originally based on [eddmann/intervals-icu-mcp](https://github.com/eddmann/intervals-icu-mcp) (MIT licensed). This project is an independent continuation with significant bug fixes and new features — see [CHANGELOG.md](https://github.com/hhopke/intervals-icu-mcp/blob/main/CHANGELOG.md) for details.
+> Fork of [hhopke/intervals-icu-mcp](https://github.com/hhopke/intervals-icu-mcp) (MIT), itself based on [eddmann/intervals-icu-mcp](https://github.com/eddmann/intervals-icu-mcp). See [CHANGELOG.md](https://github.com/yokuha/intervals-icu-mcp/blob/main/CHANGELOG.md) for upstream history.
+>
+> This fork adds features I found useful for my own data analysis.
 
-[![Tests](https://github.com/hhopke/intervals-icu-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/hhopke/intervals-icu-mcp/actions/workflows/test.yml)
-[![intervals-icu-mcp MCP server](https://glama.ai/mcp/servers/hhopke/intervals-icu-mcp/badges/score.svg)](https://glama.ai/mcp/servers/hhopke/intervals-icu-mcp)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/hhopke/intervals-icu-mcp/blob/main/LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://github.com/hhopke/intervals-icu-mcp/pkgs/container/intervals-icu-mcp)
-[![Sponsor](https://img.shields.io/badge/sponsor-%E2%9D%A4-ff69b4?logo=githubsponsors)](https://github.com/sponsors/hhopke)
+[![Tests](https://github.com/yokuha/intervals-icu-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/yokuha/intervals-icu-mcp/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/yokuha/intervals-icu-mcp/blob/main/LICENSE)
+[![Sponsor the original author](https://img.shields.io/badge/sponsor%20original-%40hhopke-ff69b4?logo=githubsponsors)](https://github.com/sponsors/hhopke)
 
 ## Overview
 
@@ -65,7 +65,7 @@ Before installation, obtain your Intervals.icu API key:
 <summary><b>Alternative: from source</b> — for development or local modifications</summary>
 
 ```bash
-git clone https://github.com/hhopke/intervals-icu-mcp.git
+git clone https://github.com/yokuha/intervals-icu-mcp.git
 cd intervals-icu-mcp
 uv sync
 uv run intervals-icu-mcp-auth  # interactive credential setup; or create .env manually:
@@ -264,7 +264,7 @@ See [docs/remote-deployment.md](https://github.com/hhopke/intervals-icu-mcp/blob
 
 ## Sponsor
 
-Free under the MIT License, maintained in my spare time. If it's useful to you, [GitHub Sponsors](https://github.com/sponsors/hhopke) supports continued development — entirely optional, and feedback or a PR helps just as much.
+Free under the MIT License. The original project is maintained by [@hhopke](https://github.com/hhopke) in their spare time — if it's useful to you, [sponsor the original author](https://github.com/sponsors/hhopke). Entirely optional; feedback or a PR upstream helps just as much.
 
 ## License
 
