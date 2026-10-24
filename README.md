@@ -262,6 +262,16 @@ See [docs/remote-deployment.md](https://github.com/hhopke/intervals-icu-mcp/blob
 
 **Contributions are very welcome, and none is too small** — a typo, a clearer parameter description, an extra test, a whole new tool. No Python or MCP expertise assumed. See [CONTRIBUTING.md](https://github.com/hhopke/intervals-icu-mcp/blob/main/CONTRIBUTING.md); in short, run `make can-release` before opening a PR. [Good first issues](https://github.com/hhopke/intervals-icu-mcp/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) are a gentle place to start.
 
+### Fork workflow (yokuha)
+
+This fork's `main` holds fork-only files (e.g. `Improvement-ideas.md`). To keep them out of
+upstream PRs, branch features from `upstream/main`, not from `main`:
+
+1. `git fetch upstream && git switch -c feat/<name> upstream/main`
+2. Update with `git rebase upstream/main` — never merge or rebase onto the fork's `main`.
+3. Check what the PR will contain: `git log --oneline upstream/main..HEAD`
+4. Run `make can-release`, push to `origin`, open the PR against `hhopke/intervals-icu-mcp:main`.
+
 ## Sponsor
 
 Free under the MIT License. The original project is maintained by [@hhopke](https://github.com/hhopke) in their spare time — if it's useful to you, [sponsor the original author](https://github.com/sponsors/hhopke). Entirely optional; feedback or a PR upstream helps just as much.
