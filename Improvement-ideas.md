@@ -75,6 +75,15 @@ resting/max breathing rate, DFA-α1 thresholds. `icu_get_sport_settings` does no
 values, and `icu_update_sport_settings` only covers FTP, FTHR, max HR, thresholds and zones, so they
 have to be entered by hand in the web UI.
 
+For illustration, these are my personal custom fields for Ride (names as I defined them in my
+account, not Intervals.icu built-ins):
+
+* Power: VT endurance, VT1, VT2, VO2max power (tyme)
+* VO2max: VO2max (vol/time/weight)
+* VE thresholds: VT endurance, VT1, VT2, VT topZ4, VT VO2max
+* Breathing rate: VT endurance, VT1, VT2 breathing rate, BRrest, BRmax
+* DFA-α1: VT1, VT2
+
 Suggestion: include the sport's custom-field defaults in `icu_get_sport_settings` (field name, code,
 value) and add a `custom_fields: dict` parameter (name or code → value) to
 `icu_update_sport_settings`. Optionally also return zones derived from those fields.
