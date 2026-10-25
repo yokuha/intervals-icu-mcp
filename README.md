@@ -223,7 +223,7 @@ For the full catalogue of example prompts by category, see [docs/examples.md](ht
 | [Activity Messages](https://github.com/hhopke/intervals-icu-mcp/blob/main/docs/tools.md#activity-messages-4-tools) | 4 | Read, post, edit, and delete notes/comments/coach feedback on activities |
 | [Athlete](https://github.com/hhopke/intervals-icu-mcp/blob/main/docs/tools.md#athlete-5-tools) | 5 | Accessible athletes, profile and athlete notes, CTL/ATL/TSB analysis, fitness chart time-series |
 | [Wellness](https://github.com/hhopke/intervals-icu-mcp/blob/main/docs/tools.md#wellness-3-tools) | 3 | HRV, sleep, recovery metrics |
-| [Events / Calendar](https://github.com/hhopke/intervals-icu-mcp/blob/main/docs/tools.md#events--calendar-12-tools) | 12 | Planned workouts, races, notes, ATP periodization (bulk ops supported) |
+| [Events / Calendar](https://github.com/hhopke/intervals-icu-mcp/blob/main/docs/tools.md#events--calendar-13-tools) | 13 | Planned workouts, races, notes, ATP periodization (bulk ops supported) |
 | [Performance / Curves](https://github.com/hhopke/intervals-icu-mcp/blob/main/docs/tools.md#performance--curves-3-tools) | 3 | Power, HR, and pace curves with zones |
 | [Workout Library](https://github.com/hhopke/intervals-icu-mcp/blob/main/docs/tools.md#workout-library-8-tools) | 8 | Browse, create, and delete folders and training plans; create (incl. bulk), update, and delete library workouts |
 | [Gear Management](https://github.com/hhopke/intervals-icu-mcp/blob/main/docs/tools.md#gear-management-6-tools) | 6 | Track equipment and maintenance reminders |
