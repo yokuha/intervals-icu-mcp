@@ -46,7 +46,7 @@ make docker/run       # Run Docker container
 ### Tool Categories
 
 1. `activities.py` — Query/manage activities
-2. `activity_analysis.py` — Streams, intervals, best efforts
+2. `activity_analysis.py` — Streams, stream window stats, intervals, best efforts
 3. `activity_messages.py` — Notes/comments on activities
 4. `athlete.py` — Profile, athlete notes, fitness metrics (CTL/ATL/TSB)
 5. `wellness.py` — HRV, sleep, recovery
