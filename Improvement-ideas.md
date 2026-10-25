@@ -5,22 +5,6 @@ missing, why it matters, and a suggested approach. Examples are illustrative.
 
 ## Activities
 
-### `icu_update_activity`: missing writable fields
-
-The tool currently accepts only `name`, `description`, `activity_type`, `trainer`, `commute`,
-`feel` and `perceived_exertion`. The Intervals.icu API accepts more fields on activity update that
-are useful in practice:
-
-* `distance` (meters): add or correct the distance, e.g. for indoor rides where the trainer app
-  knows the distance but the uploaded file does not. Passing `distance=...` currently fails with
-  "Unexpected keyword argument", so the value has to be entered by hand in the web UI.
-* `carbs_ingested` (grams): log fueling per session.
-* Worth checking as well: `calories`, `gear`, `average_speed`, `icu_rpe`, `tags`.
-
-Suggestion: add these as optional parameters, or – maybe better – add a generic `fields: dict`
-pass-through to `PUT /api/v1/activity/{id}` for any other API field.
-
-
 ### Saving intervals on an activity
 
 There are only read tools (`icu_get_activity_intervals`, `icu_search_intervals`), but no tool to
