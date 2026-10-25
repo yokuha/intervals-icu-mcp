@@ -15,40 +15,6 @@ of a ramp test as an interval.
 Suggestion: a tool `icu_update_activity_intervals` taking start/end second, label and type.
 
 
-## Power curves
-
-### `icu_get_power_curves`: only rolling windows, no seasons or date ranges
-
-The tool supports only `days_back` and `time_period` (`week`/`month`/`year`/`all`). Comparing
-"this season / last season / all-time" needs the seasons defined in Intervals.icu. A rolling
-approximation, e.g., 365 days instead of the season, shifts the window and drops or adds bests near
-its edges, so the numbers differ from what the Intervals.icu UI shows.
-
-Suggestion: add `start_date` / `end_date` and `season` (name or ID) parameters, ideally accepting
-several ranges in one call so comparisons need a single request. The API already supports this:
-`GET /api/v1/athlete/{id}/power-curves` with the `curves` parameter (e.g. `s0,s1,all` or
-`r.YYYY-MM-DD.YYYY-MM-DD`).
-
-### `icu_get_power_curves`: duration range and extra data
-
-* The description mentions 5 s to 1 h. Durability analysis for long events needs durations up to
-  about 6 h (2 h, 3 h, 4 h, 5 h, 6 h bests). Check whether the tool returns them; add them if not.
-* Missing: best values in W/kg (using the weight for the period), the period's weight, activity ID
-  and date per duration (only partly present), and the full-resolution curve (all durations instead
-  of the standard points).
-* Missing: power models (CP / W' / Pmax, FTP estimates such as `MORTON_3P`, `MS_2P`, `FFT_CURVES`,
-  `ECP`), the VO2max estimate (`vo2max_5m`) and MAP from the curve object. Currently only the simple
-  FTP estimate (95 % of 20 min) is available.
-
-Suggestion: a separate tool `icu_get_power_curve_models`, or include the models in the curve
-response.
-
-### Listing seasons
-
-There is no tool to list the athlete's Intervals.icu seasons (name, start, end). It would pair
-well with season-based curve queries.
-
-
 ## Sport settings
 
 ### Custom activity field defaults are not readable or writable
