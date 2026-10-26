@@ -1,10 +1,9 @@
 # VPS deployment (fork only)
 
-Runs this fork on a VPS over streamable HTTP and redeploys it on every push to the
-`deploy` branch. `main` is where work is integrated; `deploy` is what runs. Pushing or
-syncing `main` (including GitHub's *Sync fork*) deploys nothing.
-This folder exists only in the `yokuha` fork; keep it out of upstream PR branches
-(cut those from `upstream/main`).
+Runs this fork on a VPS over streamable HTTP and redeploys it on every push to the `deploy` branch.
+`main` is where work is integrated; `deploy` is what runs. Pushing or syncing `main` (including
+GitHub's *Sync fork*) deploys nothing. This folder exists only in the `yokuha` fork; keep it out of
+upstream PR branches (cut those from `upstream/main`).
 
 ```
 git push origin main:deploy ──▶ github.com ──webhook (HMAC)──▶ VPS: webhook :9000 ──▶ deploy.sh
@@ -24,10 +23,10 @@ git push origin main:deploy
 | `intervals-icu-mcp.service`         | `/etc/systemd/system/`                                                                |
 | `intervals-icu-mcp-webhook.service` | `/etc/systemd/system/`                                                                |
 
-Layout: user `iicu-mcp` with home `/opt/intervals-icu-mcp` (holds `uv` in `~/.local/bin`
-and caches), the clone in `/opt/intervals-icu-mcp/app`, service `intervals-icu-mcp` on
-`127.0.0.1:8000`, webhook receiver on `127.0.0.1:9000`. Change them in one go if yours differ.
-No real hostnames, IPs or secrets belong in this repo.
+Layout: user `iicu-mcp` with home `/opt/intervals-icu-mcp` (holds `uv` in `~/.local/bin` and
+caches), the clone in `/opt/intervals-icu-mcp/app`, service `intervals-icu-mcp` on `127.0.0.1:8000`,
+webhook receiver on `127.0.0.1:9000`. Change them in one go if yours differ. No real hostnames, IPs
+or secrets belong in this repo.
 
 
 ## 1. User, clone, dependencies
@@ -44,9 +43,9 @@ sudo -u iicu-mcp -H git clone -b deploy https://github.com/yokuha/intervals-icu-
 sudo -u iicu-mcp -H sh -c 'cd /opt/intervals-icu-mcp/app && ~/.local/bin/uv sync --frozen --no-dev'
 ```
 
-**Migrating an existing install** whose `app/` is not a git clone: stop the service, move it
-aside (`sudo mv /opt/intervals-icu-mcp/app /opt/intervals-icu-mcp/app.old`), run the clone and
-`uv sync` above, finish steps 2–4, and delete `app.old` once `/health` answers.
+**Migrating an existing install** whose `app/` is not a git clone: stop the service, move it aside
+(`sudo mv /opt/intervals-icu-mcp/app /opt/intervals-icu-mcp/app.old`), run the clone and `uv sync`
+above, finish steps 2–4, and delete `app.old` once `/health` answers.
 
 
 ## 2. Credentials (on the VPS only)
@@ -86,7 +85,8 @@ iicu-mcp ALL=(root) NOPASSWD: /usr/bin/systemctl restart intervals-icu-mcp
 ## 4. Services
 
 ```sh
-sudo cp /opt/intervals-icu-mcp/app/deploy/*.service /etc/systemd/system/
+# sh -c: /opt/intervals-icu-mcp is 0750, so your own shell can't expand the glob
+sudo sh -c 'cp /opt/intervals-icu-mcp/app/deploy/*.service /etc/systemd/system/'
 sudo systemctl daemon-reload
 sudo systemctl enable --now intervals-icu-mcp intervals-icu-mcp-webhook
 curl -s http://127.0.0.1:8000/health    # {"status":"ok"}
@@ -137,15 +137,15 @@ journalctl -u intervals-icu-mcp-webhook -n 30
 
 ## Operating
 
-- Manual deploy: `sudo -u iicu-mcp -H /opt/intervals-icu-mcp/app/deploy/deploy.sh`
-- Roll back: `git revert` on `main`, then `git push origin main:deploy`. Emergency only:
-  `git push --force origin <good-sha>:deploy` as repo admin (bypasses the ruleset); then run
-  `git reset --hard origin/deploy` in the VPS clone, since `deploy.sh` refuses non-fast-forwards.
-- `deploy.sh` only fast-forwards. Local edits on the VPS make it fail loudly instead of
-  being overwritten; fix with `git status` in the clone.
-- Changes to `hooks.json` apply on the next pull (`-hotreload`). Changes to the `.service`
-  files don't — copy them again and `daemon-reload`.
-- Whoever can push to `deploy` can run code on the VPS: 2FA on the GitHub account, and the
-  ruleset on `main` and `deploy` (only the repo admin may push, no force pushes) stay on.
-- Claude Code sessions on the dev machine are blocked from pushing `deploy` by a local
-  pre-push hook plus deny rules; releasing is always a human `git push origin main:deploy`.
+* Manual deploy: `sudo -u iicu-mcp -H /opt/intervals-icu-mcp/app/deploy/deploy.sh`
+* Roll back: `git revert` on `main`, then `git push origin main:deploy`. Emergency only: `git push
+  --force origin <good-sha>:deploy` as repo admin (bypasses the ruleset); then run `git reset --hard
+  origin/deploy` in the VPS clone, since `deploy.sh` refuses non-fast-forwards.
+* `deploy.sh` only fast-forwards. Local edits on the VPS make it fail loudly instead of being
+  overwritten; fix with `git status` in the clone.
+* Changes to `hooks.json` apply on the next pull (`-hotreload`). Changes to the `.service` files
+  don't — copy them again and `daemon-reload`.
+* Whoever can push to `deploy` can run code on the VPS: 2FA on the GitHub account, and the ruleset
+  on `main` and `deploy` (only the repo admin may push, no force pushes) stay on.
+* Claude Code sessions on the dev machine are blocked from pushing `deploy` by a local pre-push hook
+  plus deny rules; releasing is always a human `git push origin main:deploy`.
