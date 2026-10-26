@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Pull the deploy branch, sync dependencies, restart the service, check /health.
 # Release a version from your machine with: git push origin main:deploy
-# Called by the webhook receiver (see hooks.json) or by hand:
+# Called by the webhook receiver (see hooks.yaml) or by hand:
 #   sudo -u iicu-mcp -H /opt/intervals-icu-mcp/app/deploy/deploy.sh
 #
 # The body lives in main() so bash has read the whole script before `git pull`
