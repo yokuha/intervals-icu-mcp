@@ -1,0 +1,27 @@
+[
+  {
+    "id": "intervals-icu-mcp",
+    "execute-command": "/opt/intervals-icu-mcp/deploy/deploy.sh",
+    "command-working-directory": "/opt/intervals-icu-mcp",
+    "response-message": "deploy started",
+    "trigger-rule-mismatch-http-response-code": 403,
+    "trigger-rule": {
+      "and": [
+        {
+          "match": {
+            "type": "payload-hmac-sha256",
+            "secret": "{{ getenv \"IICU_WEBHOOK_SECRET\" }}",
+            "parameter": { "source": "header", "name": "X-Hub-Signature-256" }
+          }
+        },
+        {
+          "match": {
+            "type": "value",
+            "value": "refs/heads/deploy",
+            "parameter": { "source": "payload", "name": "ref" }
+          }
+        }
+      ]
+    }
+  }
+]

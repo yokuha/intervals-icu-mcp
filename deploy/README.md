@@ -1,0 +1,142 @@
+# VPS deployment (fork only)
+
+Runs this fork on a VPS over streamable HTTP and redeploys it on every push to the
+`deploy` branch. `main` is where work is integrated; `deploy` is what runs. Pushing or
+syncing `main` (including GitHub's *Sync fork*) deploys nothing.
+This folder exists only in the `yokuha` fork; keep it out of upstream PR branches
+(cut those from `upstream/main`).
+
+```
+git push origin main:deploy ──▶ github.com ──webhook (HMAC)──▶ VPS: webhook :9000 ──▶ deploy.sh
+                                                                 git pull --ff-only, uv sync, restart
+```
+
+Release = fast-forward `deploy` to a tested `main`:
+
+```sh
+git push origin main:deploy
+```
+
+| File                                | Goes to                                                                               |
+|-------------------------------------|---------------------------------------------------------------------------------------|
+| `deploy.sh`                         | runs from the clone, called by the webhook receiver                                   |
+| `hooks.json`                        | read in place by the receiver; holds no secret (reads `IICU_WEBHOOK_SECRET` from env) |
+| `intervals-icu-mcp.service`         | `/etc/systemd/system/`                                                                |
+| `intervals-icu-mcp-webhook.service` | `/etc/systemd/system/`                                                                |
+
+Paths, user and ports below are the defaults used in these files; change them in one go if yours differ.
+No real hostnames, IPs or secrets belong in this repo.
+
+
+## 1. User, clone, dependencies
+
+Create the `deploy` branch on GitHub once, from your machine: `git push origin main:deploy`.
+
+```sh
+sudo apt install webhook git
+sudo useradd --system --home /opt/intervals-icu-mcp --shell /usr/sbin/nologin iicu-mcp
+sudo git clone -b deploy https://github.com/yokuha/intervals-icu-mcp.git /opt/intervals-icu-mcp
+sudo chown -R iicu-mcp:iicu-mcp /opt/intervals-icu-mcp
+# uv for the service user (or install it system-wide)
+sudo -u iicu-mcp -H sh -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
+sudo -u iicu-mcp -H sh -c 'cd /opt/intervals-icu-mcp && ~/.local/bin/uv sync --frozen --no-dev'
+```
+
+`deploy.sh` calls `uv` by name; if it lives in `~/.local/bin`, symlink it to `/usr/local/bin/uv`.
+
+
+## 2. Credentials (on the VPS only)
+
+```sh
+sudo install -m 600 -o root -g root /dev/null /etc/intervals-icu-mcp.env
+sudoedit /etc/intervals-icu-mcp.env
+```
+
+```
+INTERVALS_ICU_API_KEY=...
+INTERVALS_ICU_ATHLETE_ID=i123456
+```
+
+```sh
+sudo install -m 600 -o root -g root /dev/null /etc/intervals-icu-mcp-webhook.env
+echo "IICU_WEBHOOK_SECRET=$(openssl rand -hex 32)" | sudo tee /etc/intervals-icu-mcp-webhook.env
+```
+
+Keep that secret for step 6.
+
+
+## 3. Allow exactly one restart without a password
+
+`sudo visudo -f /etc/sudoers.d/iicu-mcp-deploy`:
+
+```
+iicu-mcp ALL=(root) NOPASSWD: /usr/bin/systemctl restart intervals-icu-mcp
+```
+
+
+## 4. Services
+
+```sh
+sudo cp /opt/intervals-icu-mcp/deploy/*.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now intervals-icu-mcp intervals-icu-mcp-webhook
+curl -s http://127.0.0.1:8000/health    # {"status":"ok"}
+```
+
+
+## 5. Reverse proxy
+
+Add the webhook path to the host that already serves the MCP. **The MCP itself has no
+authentication** — keep whatever gate you already have in front of it (see
+[`docs/remote-deployment.md`](../docs/remote-deployment.md)); the `/hooks/` location is
+protected by the HMAC check instead and must bypass that gate.
+
+nginx:
+
+```
+location /hooks/ {
+    proxy_pass http://127.0.0.1:9000;
+}
+```
+
+Caddy:
+
+```
+handle /hooks/* {
+    reverse_proxy 127.0.0.1:9000
+}
+```
+
+
+## 6. GitHub webhook
+
+Repo → Settings → Webhooks → Add webhook:
+
+- Payload URL: `https://<your-host>/hooks/intervals-icu-mcp`
+- Content type: `application/json`
+- Secret: the value of `IICU_WEBHOOK_SECRET`
+- Events: *Just the push event*, SSL verification on
+
+GitHub's initial ping gets a 403 (no `ref`, so the branch filter doesn't match) — expected,
+and so do pushes to any branch other than `deploy`.
+Run `git push origin main:deploy`, then check *Recent Deliveries* (200 "deploy started") and on the VPS:
+
+```sh
+journalctl -u intervals-icu-mcp-webhook -n 30
+```
+
+
+## Operating
+
+- Manual deploy: `sudo -u iicu-mcp /opt/intervals-icu-mcp/deploy/deploy.sh`
+- Roll back: `git revert` on `main`, then `git push origin main:deploy`. Emergency only:
+  `git push --force origin <good-sha>:deploy` as repo admin (bypasses the ruleset); then run
+  `git reset --hard origin/deploy` in the VPS clone, since `deploy.sh` refuses non-fast-forwards.
+- `deploy.sh` only fast-forwards. Local edits on the VPS make it fail loudly instead of
+  being overwritten; fix with `git status` in the clone.
+- Changes to `hooks.json` apply on the next pull (`-hotreload`). Changes to the `.service`
+  files don't — copy them again and `daemon-reload`.
+- Whoever can push to `deploy` can run code on the VPS: 2FA on the GitHub account, and the
+  ruleset on `main` and `deploy` (only the repo admin may push, no force pushes) stay on.
+- Claude Code sessions on the dev machine are blocked from pushing `deploy` by a local
+  pre-push hook plus deny rules; releasing is always a human `git push origin main:deploy`.
