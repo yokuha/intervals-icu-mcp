@@ -19,7 +19,7 @@ git push origin main:deploy
 | File                                | Goes to                                                                               |
 |-------------------------------------|---------------------------------------------------------------------------------------|
 | `deploy.sh`                         | runs from the clone, called by the webhook receiver                                   |
-| `hooks.json`                        | read in place by the receiver; holds no secret (reads `IICU_WEBHOOK_SECRET` from env) |
+| `hooks.yaml`                        | read in place by the receiver; holds no secret (reads `IICU_WEBHOOK_SECRET` from env) |
 | `intervals-icu-mcp.service`         | `/etc/systemd/system/`                                                                |
 | `intervals-icu-mcp-webhook.service` | `/etc/systemd/system/`                                                                |
 
@@ -143,7 +143,7 @@ journalctl -u intervals-icu-mcp-webhook -n 30
   origin/deploy` in the VPS clone, since `deploy.sh` refuses non-fast-forwards.
 * `deploy.sh` only fast-forwards. Local edits on the VPS make it fail loudly instead of being
   overwritten; fix with `git status` in the clone.
-* Changes to `hooks.json` apply on the next pull (`-hotreload`). Changes to the `.service` files
+* Changes to `hooks.yaml` apply on the next pull (`-hotreload`). Changes to the `.service` files
   don't — copy them again and `daemon-reload`.
 * Whoever can push to `deploy` can run code on the VPS: 2FA on the GitHub account, and the ruleset
   on `main` and `deploy` (only the repo admin may push, no force pushes) stay on.
