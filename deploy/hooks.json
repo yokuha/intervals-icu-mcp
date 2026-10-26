@@ -1,8 +1,8 @@
 [
   {
     "id": "intervals-icu-mcp",
-    "execute-command": "/opt/intervals-icu-mcp/deploy/deploy.sh",
-    "command-working-directory": "/opt/intervals-icu-mcp",
+    "execute-command": "/opt/intervals-icu-mcp/app/deploy/deploy.sh",
+    "command-working-directory": "/opt/intervals-icu-mcp/app",
     "response-message": "deploy started",
     "trigger-rule-mismatch-http-response-code": 403,
     "trigger-rule": {
