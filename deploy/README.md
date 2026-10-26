@@ -128,11 +128,40 @@ Repo → Settings → Webhooks → Add webhook:
 
 GitHub's initial ping gets a 403 (no `ref`, so the branch filter doesn't match) — expected,
 and so do pushes to any branch other than `deploy`.
-Run `git push origin main:deploy`, then check *Recent Deliveries* (200 "deploy started") and on the VPS:
+
+
+## 7. Check that a deploy arrived and ran
+
+Run `git push origin main:deploy`, then check three places.
+
+**GitHub — did it arrive?** Repo → Settings → Webhooks → the hook → *Recent Deliveries*.
+*Redeliver* resends a delivery without a new push.
+
+| Response | Meaning |
+|---|---|
+| 200 "deploy started" | signature and branch matched, `deploy.sh` started |
+| 403 | no match: expected for other branches; on a `deploy` push the secret is wrong |
+| 502 / timeout | Caddy doesn't forward `/hooks/`, or the receiver isn't running |
+
+**VPS — did it run?** The receiver runs with `-verbose`, so deliveries and `deploy.sh`'s
+output land in the journal. Watch live while pushing:
 
 ```sh
-journalctl -u intervals-icu-mcp-webhook -n 30
+sudo journalctl -u intervals-icu-mcp-webhook -f
 ```
+
+A deploy shows the incoming request, the matched hook, and ends with
+`deploy: now at <sha>, healthy` — or the error that stopped it.
+
+**VPS — is the new version live?**
+
+```sh
+sudo -u iicu-mcp -H git -C /opt/intervals-icu-mcp/app log --oneline -1
+systemctl show intervals-icu-mcp -p ActiveEnterTimestamp
+```
+
+The commit must match `git log --oneline -1 origin/deploy` on your machine, and the start
+time should be just after the push.
 
 
 ## Operating
