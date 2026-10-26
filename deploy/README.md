@@ -186,6 +186,7 @@ time should be just after the push.
 * Changes to `hooks.yaml` apply on the next pull (`-hotreload`). Changes to the `.service` files
   don't — copy them again and `daemon-reload`.
 * Whoever can push to `deploy` can run code on the VPS: 2FA on the GitHub account, and the ruleset
-  on `main` and `deploy` (only the repo admin may push, no force pushes) stay on.
+  on `deploy` (only the repo admin may push, no force pushes) stay on. `main` needs none: it
+  deploys nothing.
 * Claude Code sessions on the dev machine are blocked from pushing `deploy` by a local pre-push hook
   plus deny rules; releasing is always a human `git push origin main:deploy`.
