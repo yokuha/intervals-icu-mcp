@@ -1,0 +1,21 @@
+[Unit]
+Description=GitHub webhook receiver that deploys intervals-icu-mcp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=iicu-mcp
+Group=iicu-mcp
+# IICU_WEBHOOK_SECRET=<same value as the GitHub webhook "Secret">
+EnvironmentFile=/etc/intervals-icu-mcp-webhook.env
+ExecStart=/usr/bin/webhook -hooks /opt/intervals-icu-mcp/deploy/hooks.json -template -hotreload -ip 127.0.0.1 -port 9000 -urlprefix hooks
+Restart=on-failure
+RestartSec=5
+
+# No NoNewPrivileges here: deploy.sh needs sudo for the one systemctl restart
+# allowed in /etc/sudoers.d/iicu-mcp-deploy.
+PrivateTmp=true
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

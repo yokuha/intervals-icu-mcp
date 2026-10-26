@@ -1,0 +1,27 @@
+[Unit]
+Description=Intervals.icu MCP server (streamable HTTP)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=iicu-mcp
+Group=iicu-mcp
+WorkingDirectory=/opt/intervals-icu-mcp
+# INTERVALS_ICU_API_KEY, INTERVALS_ICU_ATHLETE_ID, optional INTERVALS_ICU_DELETE_MODE
+EnvironmentFile=/etc/intervals-icu-mcp.env
+ExecStart=/opt/intervals-icu-mcp/.venv/bin/intervals-icu-mcp --transport http --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5
+
+# Hardening. The server writes nothing at runtime; the download tools' optional
+# output_path is refused here by ProtectSystem=strict, which is what you want remotely.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target
