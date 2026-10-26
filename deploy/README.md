@@ -108,12 +108,23 @@ location /hooks/ {
 }
 ```
 
-Caddy:
+Caddy — wrap both routes in `handle` blocks so `/hooks/` can't fall through to the MCP
+(which answers 404 for anything outside `MCP_PATH`):
 
 ```
-handle /hooks/* {
-    reverse_proxy 127.0.0.1:9000
+<your-host> {
+    handle /hooks/* {
+        reverse_proxy 127.0.0.1:9000
+    }
+    handle {
+        reverse_proxy 127.0.0.1:8000
+    }
 }
+```
+
+```sh
+sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy
+curl -si -X POST https://<your-host>/hooks/intervals-icu-mcp | head -1   # 403 = reachable
 ```
 
 
