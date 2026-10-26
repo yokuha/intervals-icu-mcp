@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
 # Pull the deploy branch, sync dependencies, restart the service, check /health.
 # Release a version from your machine with: git push origin main:deploy
-# Called by the webhook receiver (see hooks.json) or by hand: sudo -u iicu-mcp ./deploy.sh
+# Called by the webhook receiver (see hooks.json) or by hand:
+#   sudo -u iicu-mcp -H /opt/intervals-icu-mcp/app/deploy/deploy.sh
 #
 # The body lives in main() so bash has read the whole script before `git pull`
 # can replace this file underneath it.
 set -euo pipefail
 
 main() {
-    local repo_dir="${IICU_REPO_DIR:-/opt/intervals-icu-mcp}"
+    local repo_dir="${IICU_REPO_DIR:-/opt/intervals-icu-mcp/app}"
+    # uv is installed per user in ~/.local/bin, which systemd's PATH doesn't include.
+    export PATH="${HOME}/.local/bin:${PATH}"
     local branch="${IICU_BRANCH:-deploy}"
     local service="${IICU_SERVICE:-intervals-icu-mcp}"
     local port="${IICU_PORT:-8000}"

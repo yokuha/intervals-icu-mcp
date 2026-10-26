@@ -6,10 +6,11 @@ Wants=network-online.target
 [Service]
 User=iicu-mcp
 Group=iicu-mcp
-WorkingDirectory=/opt/intervals-icu-mcp
-# INTERVALS_ICU_API_KEY, INTERVALS_ICU_ATHLETE_ID, optional INTERVALS_ICU_DELETE_MODE
+WorkingDirectory=/opt/intervals-icu-mcp/app
+# INTERVALS_ICU_API_KEY, INTERVALS_ICU_ATHLETE_ID, MCP_PATH (secret URL path, e.g. /<random>/mcp),
+# optional INTERVALS_ICU_DELETE_MODE
 EnvironmentFile=/etc/intervals-icu-mcp.env
-ExecStart=/opt/intervals-icu-mcp/.venv/bin/intervals-icu-mcp --transport http --host 127.0.0.1 --port 8000
+ExecStart=/opt/intervals-icu-mcp/app/.venv/bin/intervals-icu-mcp --transport http --host 127.0.0.1 --port 8000 --path ${MCP_PATH}
 Restart=on-failure
 RestartSec=5
 

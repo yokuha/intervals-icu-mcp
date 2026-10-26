@@ -24,7 +24,9 @@ git push origin main:deploy
 | `intervals-icu-mcp.service`         | `/etc/systemd/system/`                                                                |
 | `intervals-icu-mcp-webhook.service` | `/etc/systemd/system/`                                                                |
 
-Paths, user and ports below are the defaults used in these files; change them in one go if yours differ.
+Layout: user `iicu-mcp` with home `/opt/intervals-icu-mcp` (holds `uv` in `~/.local/bin`
+and caches), the clone in `/opt/intervals-icu-mcp/app`, service `intervals-icu-mcp` on
+`127.0.0.1:8000`, webhook receiver on `127.0.0.1:9000`. Change them in one go if yours differ.
 No real hostnames, IPs or secrets belong in this repo.
 
 
@@ -34,15 +36,17 @@ Create the `deploy` branch on GitHub once, from your machine: `git push origin m
 
 ```sh
 sudo apt install webhook git
-sudo useradd --system --home /opt/intervals-icu-mcp --shell /usr/sbin/nologin iicu-mcp
-sudo git clone -b deploy https://github.com/yokuha/intervals-icu-mcp.git /opt/intervals-icu-mcp
-sudo chown -R iicu-mcp:iicu-mcp /opt/intervals-icu-mcp
-# uv for the service user (or install it system-wide)
+# skip if the user already exists
+sudo useradd --system --home /opt/intervals-icu-mcp --create-home --shell /usr/sbin/nologin iicu-mcp
+# uv for the service user, if not there yet
 sudo -u iicu-mcp -H sh -c 'curl -LsSf https://astral.sh/uv/install.sh | sh'
-sudo -u iicu-mcp -H sh -c 'cd /opt/intervals-icu-mcp && ~/.local/bin/uv sync --frozen --no-dev'
+sudo -u iicu-mcp -H git clone -b deploy https://github.com/yokuha/intervals-icu-mcp.git /opt/intervals-icu-mcp/app
+sudo -u iicu-mcp -H sh -c 'cd /opt/intervals-icu-mcp/app && ~/.local/bin/uv sync --frozen --no-dev'
 ```
 
-`deploy.sh` calls `uv` by name; if it lives in `~/.local/bin`, symlink it to `/usr/local/bin/uv`.
+**Migrating an existing install** whose `app/` is not a git clone: stop the service, move it
+aside (`sudo mv /opt/intervals-icu-mcp/app /opt/intervals-icu-mcp/app.old`), run the clone and
+`uv sync` above, finish steps 2–4, and delete `app.old` once `/health` answers.
 
 
 ## 2. Credentials (on the VPS only)
@@ -55,7 +59,12 @@ sudoedit /etc/intervals-icu-mcp.env
 ```
 INTERVALS_ICU_API_KEY=...
 INTERVALS_ICU_ATHLETE_ID=i123456
+# secret URL path; generate the random part with: openssl rand -hex 24
+MCP_PATH=/<random>/mcp
 ```
+
+The MCP is then reachable only at `https://<your-host>${MCP_PATH}` — treat that URL like a
+password. An existing env file keeps working as long as it has these three keys.
 
 ```sh
 sudo install -m 600 -o root -g root /dev/null /etc/intervals-icu-mcp-webhook.env
@@ -77,7 +86,7 @@ iicu-mcp ALL=(root) NOPASSWD: /usr/bin/systemctl restart intervals-icu-mcp
 ## 4. Services
 
 ```sh
-sudo cp /opt/intervals-icu-mcp/deploy/*.service /etc/systemd/system/
+sudo cp /opt/intervals-icu-mcp/app/deploy/*.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now intervals-icu-mcp intervals-icu-mcp-webhook
 curl -s http://127.0.0.1:8000/health    # {"status":"ok"}
@@ -87,9 +96,9 @@ curl -s http://127.0.0.1:8000/health    # {"status":"ok"}
 ## 5. Reverse proxy
 
 Add the webhook path to the host that already serves the MCP. **The MCP itself has no
-authentication** — keep whatever gate you already have in front of it (see
-[`docs/remote-deployment.md`](../docs/remote-deployment.md)); the `/hooks/` location is
-protected by the HMAC check instead and must bypass that gate.
+authentication** — the secret `MCP_PATH` plus whatever gate you have in front of it are the
+protection (see [`docs/remote-deployment.md`](../docs/remote-deployment.md)); the `/hooks/`
+location is protected by the HMAC check instead and must bypass any such gate.
 
 nginx:
 
@@ -128,7 +137,7 @@ journalctl -u intervals-icu-mcp-webhook -n 30
 
 ## Operating
 
-- Manual deploy: `sudo -u iicu-mcp /opt/intervals-icu-mcp/deploy/deploy.sh`
+- Manual deploy: `sudo -u iicu-mcp -H /opt/intervals-icu-mcp/app/deploy/deploy.sh`
 - Roll back: `git revert` on `main`, then `git push origin main:deploy`. Emergency only:
   `git push --force origin <good-sha>:deploy` as repo admin (bypasses the ruleset); then run
   `git reset --hard origin/deploy` in the VPS clone, since `deploy.sh` refuses non-fast-forwards.
