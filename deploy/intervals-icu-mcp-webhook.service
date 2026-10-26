@@ -8,7 +8,7 @@ User=iicu-mcp
 Group=iicu-mcp
 # IICU_WEBHOOK_SECRET=<same value as the GitHub webhook "Secret">
 EnvironmentFile=/etc/intervals-icu-mcp-webhook.env
-ExecStart=/usr/bin/webhook -hooks /opt/intervals-icu-mcp/app/deploy/hooks.yaml -template -hotreload -ip 127.0.0.1 -port 9000 -urlprefix hooks
+ExecStart=/usr/bin/webhook -hooks /opt/intervals-icu-mcp/app/deploy/hooks.yaml -template -hotreload -verbose -ip 127.0.0.1 -port 9000 -urlprefix hooks
 Restart=on-failure
 RestartSec=5
 
