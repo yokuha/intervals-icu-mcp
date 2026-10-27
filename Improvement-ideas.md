@@ -65,9 +65,26 @@ account, not Intervals.icu built-ins):
 * Breathing rate: VT endurance, VT1, VT2 breathing rate, BRrest, BRmax
 * DFA-α1: VT1, VT2
 
-Suggestion: include the sport's custom-field defaults in `icu_get_sport_settings` (field name, code,
-value) and add a `custom_fields: dict` parameter (name or code → value) to
-`icu_update_sport_settings`. Optionally also return zones derived from those fields.
+Cause: the API does send them, as `custom_field_values` (field code → value) in the SportSettings
+object, with the field definitions referenced by `custom_field_ids` / `activity_field_ids`. But the
+`SportSettings` model has no such field (and no `extra="allow"`), so Pydantic drops the key while
+parsing, and `format_sport_settings_entry` has nothing to print. Writing fails the same way:
+`icu_update_sport_settings` only forwards its known parameters.
+
+Suggestion:
+
+1. Read: add `custom_field_values: dict[str, Any]` to the `SportSettings` model and emit it from
+   `format_sport_settings_entry` as `custom_fields`. Resolve code → display name via the account's
+   `ACTIVITY_FIELD` custom items (same lookup as `icu_get_custom_items`), so the output reads
+   `{code, name, value}` instead of bare codes. Fall back to the bare code if the lookup fails.
+2. Write: add a `custom_fields: dict` parameter (name or code → value) to
+   `icu_update_sport_settings`. Map names to codes, and merge into the existing
+   `custom_field_values` before the PUT so unmentioned fields are not wiped (verify against the
+   API whether it replaces or merges the object).
+3. Optional: return zones derived from those fields.
+
+Tests: respx-mocked GET with `custom_field_values`, and a PUT test asserting the merged payload.
+This is non-breaking (added field and optional parameter), so it can ship as a minor.
 
 
 ## Streams
