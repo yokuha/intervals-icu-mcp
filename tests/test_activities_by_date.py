@@ -61,7 +61,9 @@ class TestGetActivitiesByDate:
         assert response["data"]["activities"][1]["name"] == "Untitled"
 
     async def test_sends_oldest_and_newest_params(self, mock_config, respx_mock):
-        respx_mock.get("/athlete/i123456/activities").mock(return_value=Response(200, json=[]))
+        respx_mock.get("/athlete/i123456/activities").mock(
+            return_value=Response(200, json=[])
+        )
 
         await get_activities_by_date(
             oldest="2025-06-01", newest="2025-11-30", ctx=_make_ctx(mock_config)
@@ -72,7 +74,9 @@ class TestGetActivitiesByDate:
         assert params["newest"] == "2025-11-30"
 
     async def test_newest_optional(self, mock_config, respx_mock):
-        respx_mock.get("/athlete/i123456/activities").mock(return_value=Response(200, json=[]))
+        respx_mock.get("/athlete/i123456/activities").mock(
+            return_value=Response(200, json=[])
+        )
 
         await get_activities_by_date(oldest="2025-06-01", ctx=_make_ctx(mock_config))
 
@@ -81,9 +85,13 @@ class TestGetActivitiesByDate:
         assert "newest" not in params
 
     async def test_empty(self, mock_config, respx_mock):
-        respx_mock.get("/athlete/i123456/activities").mock(return_value=Response(200, json=[]))
+        respx_mock.get("/athlete/i123456/activities").mock(
+            return_value=Response(200, json=[])
+        )
 
-        result = await get_activities_by_date(oldest="2025-06-01", ctx=_make_ctx(mock_config))
+        result = await get_activities_by_date(
+            oldest="2025-06-01", ctx=_make_ctx(mock_config)
+        )
         response = json.loads(result)
         assert response["data"]["count"] == 0
         assert "No activities found" in response["metadata"]["message"]
@@ -97,7 +105,9 @@ class TestActivitiesAroundParams:
             return_value=Response(200, json=[])
         )
 
-        await get_activities_around(activity_id="i159947305", count=30, ctx=_make_ctx(mock_config))
+        await get_activities_around(
+            activity_id="i159947305", count=30, ctx=_make_ctx(mock_config)
+        )
 
         params = respx_mock.calls.last.request.url.params
         # The fix: API-correct names are sent...
