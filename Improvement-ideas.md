@@ -46,47 +46,6 @@ non-null API fields grouped like above, including custom interval fields and `ic
 Optionally add a `fields` filter to keep responses small.
 
 
-## Sport settings
-
-### Custom activity field defaults are not readable or writable
-
-Sport settings can hold default values for custom activity fields, e.g. thresholds from a breathing
-or HRV sensor test: ventilatory thresholds (VT1/VT2) as power, VE and breathing rate, VO2max power,
-resting/max breathing rate, DFA-α1 thresholds. `icu_get_sport_settings` does not return these
-values, and `icu_update_sport_settings` only covers FTP, FTHR, max HR, thresholds and zones, so they
-have to be entered by hand in the web UI.
-
-For illustration, these are my personal custom fields for Ride (names as I defined them in my
-account, not Intervals.icu built-ins):
-
-* Power: VT endurance, VT1, VT2, VO2max power (tyme)
-* VO2max: VO2max (vol/time/weight)
-* VE thresholds: VT endurance, VT1, VT2, VT topZ4, VT VO2max
-* Breathing rate: VT endurance, VT1, VT2 breathing rate, BRrest, BRmax
-* DFA-α1: VT1, VT2
-
-Cause: the API does send them, as `custom_field_values` (field code → value) in the SportSettings
-object, with the field definitions referenced by `custom_field_ids` / `activity_field_ids`. But the
-`SportSettings` model has no such field (and no `extra="allow"`), so Pydantic drops the key while
-parsing, and `format_sport_settings_entry` has nothing to print. Writing fails the same way:
-`icu_update_sport_settings` only forwards its known parameters.
-
-Suggestion:
-
-1. Read: add `custom_field_values: dict[str, Any]` to the `SportSettings` model and emit it from
-   `format_sport_settings_entry` as `custom_fields`. Resolve code → display name via the account's
-   `ACTIVITY_FIELD` custom items (same lookup as `icu_get_custom_items`), so the output reads
-   `{code, name, value}` instead of bare codes. Fall back to the bare code if the lookup fails.
-2. Write: add a `custom_fields: dict` parameter (name or code → value) to
-   `icu_update_sport_settings`. Map names to codes, and merge into the existing
-   `custom_field_values` before the PUT so unmentioned fields are not wiped (verify against the
-   API whether it replaces or merges the object).
-3. Optional: return zones derived from those fields.
-
-Tests: respx-mocked GET with `custom_field_values`, and a PUT test asserting the merged payload.
-This is non-breaking (added field and optional parameter), so it can ship as a minor.
-
-
 ## Streams
 
 ### Computing DFA-α1 from the `hrv` stream
