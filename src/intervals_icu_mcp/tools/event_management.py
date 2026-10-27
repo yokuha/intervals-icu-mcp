@@ -202,9 +202,7 @@ def _swim_work_lacks_intensity(steps: list[Any]) -> bool:
                     cast(list[Any], nested),
                     excluded or text.startswith(("warmup", "cooldown")),
                 )
-            elif (
-                not excluded and not step_dict.get("warmup") and not step_dict.get("cooldown")
-            ):
+            elif not excluded and not step_dict.get("warmup") and not step_dict.get("cooldown"):
                 work.append(step_dict)
 
     _collect(steps, False)
