@@ -111,7 +111,9 @@ class TestHTTPTransport:
     """
 
     @asynccontextmanager
-    async def _http_client(self, *, mcp_path: str = "/mcp") -> AsyncIterator[httpx.AsyncClient]:
+    async def _http_client(
+        self, *, mcp_path: str = "/mcp"
+    ) -> AsyncIterator[httpx.AsyncClient]:
         """AsyncClient bound to the MCP ASGI app with lifespan managed.
 
         FastMCP's streamable-http transport initializes its session manager in

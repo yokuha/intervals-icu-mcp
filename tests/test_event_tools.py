@@ -1587,7 +1587,9 @@ class TestBulkUpdateEventAccess:
             return_value=Response(200, json=self._ev(event_id, **flags))
         )
 
-    async def test_range_updates_workouts_and_skips_other_categories(self, mock_config, respx_mock):
+    async def test_range_updates_workouts_and_skips_other_categories(
+        self, mock_config, respx_mock
+    ):
         list_route = respx_mock.get("/athlete/i123456/events").mock(
             return_value=Response(
                 200,
@@ -1655,7 +1657,9 @@ class TestBulkUpdateEventAccess:
         assert put1.call_count == 1
         assert json.loads(result)["data"]["updated_count"] == 1
 
-    async def test_already_set_events_are_unchanged_without_a_put(self, mock_config, respx_mock):
+    async def test_already_set_events_are_unchanged_without_a_put(
+        self, mock_config, respx_mock
+    ):
         respx_mock.get("/athlete/i123456/events").mock(
             return_value=Response(
                 200, json=[self._ev(1, hide_from_athlete=True, athlete_cannot_edit=True)]
@@ -1676,7 +1680,9 @@ class TestBulkUpdateEventAccess:
         assert data["unchanged"] == [1]
         assert data["updated_count"] == 0
 
-    async def test_one_missing_id_fails_and_the_rest_still_update(self, mock_config, respx_mock):
+    async def test_one_missing_id_fails_and_the_rest_still_update(
+        self, mock_config, respx_mock
+    ):
         respx_mock.get("/athlete/i123456/events/1").mock(
             return_value=Response(200, json=self._ev(1))
         )
@@ -1734,12 +1740,8 @@ class TestBulkUpdateEventAccess:
             ({"hide_from_athlete": True}, "Select events"),
             ({"event_ids": "[1]"}, "Pass hide_from_athlete"),
             (
-                {
-                    "event_ids": "[1]",
-                    "oldest": "2026-10-12",
-                    "newest": "2026-10-12",
-                    "hide_from_athlete": True,
-                },
+                {"event_ids": "[1]", "oldest": "2026-10-12", "newest": "2026-10-12",
+                 "hide_from_athlete": True},
                 "not both",
             ),
             ({"oldest": "2026-10-12", "hide_from_athlete": True}, "both oldest and newest"),
