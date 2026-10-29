@@ -3,4 +3,4 @@
 #
 # hhopke  - author of the original project (https://github.com/hhopke/intervals-icu-mcp)
 # yokuha  - maintainer of this fork: local changes and contributions upstream
-github: [hhopke, yokuha]
+github: [yokuha, hhopke]
