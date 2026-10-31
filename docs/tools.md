@@ -1,6 +1,6 @@
 # Tool, Resource, and Prompt Reference
 
-Complete inventory of everything the Intervals.icu MCP server exposes: up to 71 tools across 11 categories, 4 MCP Resources, and 9 MCP Prompts.
+Complete inventory of everything the Intervals.icu MCP server exposes: up to 73 tools across 11 categories, 4 MCP Resources, and 9 MCP Prompts.
 
 ## Delete Safety Mode
 
@@ -8,9 +8,9 @@ Destructive tools are gated by the optional `INTERVALS_ICU_DELETE_MODE` env var.
 
 | Mode | Registered tools | Events | Activities | Activity notes | Gear | Library workouts | Library folders | Sport settings | Custom items |
 |---|---|---|---|---|---|---|---|---|---|
-| `safe` (default) | 68 | tomorrow or later | ✗ | ✓ | ✓ | ✓ | empty only | ✗ | ✗ |
-| `full` | 71 | any date | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| `none` | 62 | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| `safe` (default) | 70 | tomorrow or later | ✗ | ✓ | ✓ | ✓ | empty only | ✗ | ✗ |
+| `full` | 73 | any date | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `none` | 64 | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 
 In `safe` mode, `icu_delete_event`, `icu_bulk_delete_events`, and `icu_delete_workout_folder` return a uniform envelope showing what was deleted and what was skipped (the folder tool also adds a `folder` summary):
 
@@ -116,6 +116,41 @@ resource takes no arguments and always reflects the configured default athlete.
 | `icu_get_hr_histogram`       | Get heart rate distribution histogram for an activity         |
 | `icu_get_pace_histogram`     | Get pace distribution histogram for an activity               |
 | `icu_get_gap_histogram`      | Get grade-adjusted pace histogram for an activity             |
+
+#### `icu_get_stream_stats` in detail
+
+Answers drift questions ("how did HR/power and ventilation/power develop over the ride?") with exact numbers instead of letting the model average thousands of raw samples.
+
+- **Windows** — `block_minutes`, `parts`, or explicit `windows` (`[[start_s, end_s], ...]` in elapsed seconds); none = whole activity. At most 24 windows.
+- **`icu` block** — one `GET /activity/{id}/interval-stats` call per window, so the numbers match what the Intervals.icu UI shows for that range. It always covers the whole window and ignores power filters. The tool adds `hr_per_watt`, `ve_per_watt` and `br_per_watt`.
+- **`filtered` block** — only when `streams` or `min_power`/`max_power` is given. Mean/median/min/max computed by the server on samples that pass the power filter. `power_smoothing_s` applies the filter to trailing mean power, and `lag_s` pairs power at *t* with the other streams at *t + lag_s* (HR lags power by roughly 15–30 s). One sample counts as one second.
+- **`analysis`** — each ratio's drift in percent against the first window, plus the whole-activity Pw:HR result from `GET /activity/{id}/power-vs-hr.json` (watts per bpm for each half, decoupling, HR lag, warm-up/cool-down excluded).
+- **Missing streams** are reported with did-you-mean suggestions, never dropped silently. The API rejects an unknown lower-case name with 422 (it treats those as built-in types) and silently omits an unknown custom code; both cases end up under `missing_streams`.
+- **Rate limits** — the per-window calls run at most 4 at a time. Many small windows on one activity use up the Intervals.icu rate limit quickly.
+
+#### Respiration streams and breath-rate sources
+
+Tyme Wear chest sensors write three FIT developer fields. Intervals.icu copies each one 1:1 into a built-in stream at import:
+
+| Tyme Wear FIT field | Meaning | Intervals.icu stream | Alias |
+|---|---|---|---|
+| `tyme_breath_rate` | Breath rate (BR), breaths/min | `respiration` | `BR`, `breath_rate` |
+| `tyme_tidal_volume` | Tidal volume (VT), **centilitres** (200 = 2.0 L) | `tidal_volume` | `VT` |
+| `tyme_minute_volume` | Minute ventilation (VE), L/min | `tidal_volume_min` | `VE`, `ventilation` |
+
+Custom streams that read these FIT fields (e.g. `TymeBreathRate`, `TymeVentilation`) hold the same values. `icu_get_stream_stats` reports VT as `avg_tidal_volume_l`, already converted to litres.
+
+**Without Tyme Wear, `respiration` is not measured.** Intervals.icu then fills it from the recording device's estimate, i.e. the FIT field `enhanced_respiration_rate` written by the head unit or watch (e.g. a Garmin Edge). The device computes it from the beat-to-beat intervals of the paired heart-rate sensor (respiratory sinus arrhythmia), typically a chest strap. HRV data fields such as the one that also records DFA α1 write their own HR-derived estimate to the FIT field `RespirationRate`. Intervals.icu does not import that field unless the athlete defines a custom activity stream for it.
+
+`icu_get_stream_stats` therefore picks the breath-rate source in this order and states it in `breath_rate_source` (`source`, `measured`, and a `note` for estimates):
+
+1. **Tyme Wear** (`source: "tyme"`, `measured: true`), detected by the presence of `tidal_volume_min`.
+2. **HRV app** (`source: "hrv_app"`): a custom activity stream whose `fit_record_field` is `RespirationRate`, whatever its code. The per-window `avg_breath_rate` is computed from it, and a `BR` alias in `streams` resolves to it.
+3. **Recording device** (`source: "device"`, with `device` set to the activity's device name, e.g. "Garmin Edge 850"): Intervals.icu's `respiration` stream.
+
+Sources 2 and 3 are estimates. In a side-by-side comparison on one ride (second by second, from the original FIT file), the HRV-app and recording-device (Garmin Edge, chest strap) values agreed with each other only loosely: mean difference about 1.5–2 brpm, mean absolute difference 3–4 brpm, r ≈ 0.7. Both read about 11–12 brpm **below** the Tyme Wear sensor in every 10-minute block and did not follow its changes (r ≈ 0). This is one ride, not a validation study, but it means `br_per_watt` and its drift are weak evidence unless the source is Tyme Wear.
+
+To use an HRV app's breath rate, create a custom item of type `ACTIVITY_STREAM` with `fit_record_field: "RespirationRate"`, either in the Intervals.icu UI or with `icu_create_custom_item`.
 
 ### Activity Messages (4 tools)
 
