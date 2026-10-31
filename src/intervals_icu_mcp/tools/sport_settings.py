@@ -116,7 +116,7 @@ async def update_sport_settings(
     custom_fields: Annotated[
         dict[str, Any] | None,
         "Default values for custom activity fields, keyed by field code or display name "
-        "(e.g. {'VT1': 245}). Merged into the existing defaults; fields not listed are kept",
+        "(e.g. {'VT1': 245}). Merged by the API into the existing defaults; fields not listed are kept. null clears a value",
     ] = None,
     athlete_id: Annotated[str | None, "Athlete ID (for coaches managing multiple athletes)"] = None,
     ctx: Context | None = None,
@@ -159,20 +159,10 @@ async def update_sport_settings(
             if custom_fields:
                 field_names = await _load_activity_field_names(client, athlete_id)
                 resolved = resolve_custom_field_codes(custom_fields, field_names)
-                current = next(
-                    (
-                        s
-                        for s in await client.get_sport_settings(athlete_id=athlete_id)
-                        if s.id == sport_id
-                    ),
-                    None,
-                )
-                if current is None:
-                    return ResponseBuilder.build_error_response(
-                        f"Sport settings {sport_id} not found", error_type="validation_error"
-                    )
-                # Send the full merged object: unlisted fields must survive the PUT
-                settings_data["custom_field_values"] = {**current.custom_field_values, **resolved}
+                # Send only the keys being changed: the API merges them into the stored
+                # defaults. Echoing the stored ones back would be rejected with 422 if any is no
+                # longer a known activity field (e.g. a code later re-created as a wellness field).
+                settings_data["custom_field_values"] = resolved
 
             if not settings_data:
                 return ResponseBuilder.build_error_response(

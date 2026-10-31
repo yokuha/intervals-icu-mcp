@@ -611,13 +611,9 @@ class TestCustomFieldDefaults:
 
         assert "custom_fields" not in response["data"]["sport_settings"][0]
 
-    async def test_update_merges_by_name_and_code(self, patch_config, respx_mock):
-        respx_mock.get("/athlete/i123456/sport-settings").mock(
-            return_value=Response(
-                200,
-                json=[{"id": 1, "types": ["Ride"], "custom_field_values": {"VT1": 240, "Z": 5}}],
-            )
-        )
+    async def test_update_sends_only_changed_fields_by_name_and_code(
+        self, patch_config, respx_mock
+    ):
         self._mock_items(respx_mock)
         route = respx_mock.put("/athlete/i123456/sport-settings/1").mock(
             return_value=Response(
@@ -632,9 +628,9 @@ class TestCustomFieldDefaults:
 
         result = await update_sport_settings(sport_id=1, custom_fields={"vt2 power": 290})
 
-        assert json.loads(route.calls.last.request.content) == {
-            "custom_field_values": {"VT1": 240, "Z": 5, "VT2": 290}
-        }
+        # Only the changed key goes out: the API merges it, and stored keys that are no longer
+        # known activity fields (the "Z" here) would make it reject the whole request.
+        assert json.loads(route.calls.last.request.content) == {"custom_field_values": {"VT2": 290}}
         assert json.loads(result)["data"]["custom_fields"][2]["name"] == "VT2 power"
 
     async def test_update_rejects_unknown_field_without_put(self, patch_config, respx_mock):
