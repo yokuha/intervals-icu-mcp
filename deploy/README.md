@@ -6,15 +6,19 @@ GitHub's *Sync fork*) deploys nothing. This folder exists only in the `yokuha` f
 upstream PR branches (cut those from `upstream/main`).
 
 ```
-git push origin main:deploy ──▶ github.com ──webhook (HMAC)──▶ VPS: webhook :9000 ──▶ deploy.sh
+git push origin deploy ──▶ github.com ──webhook (HMAC)──▶ VPS: webhook :9000 ──▶ deploy.sh
                                                                  git pull --ff-only, uv sync, restart
 ```
 
-Release = fast-forward `deploy` to a tested `main`:
+Release = merge a tested `main` into `deploy`, then push it:
 
 ```sh
-git push origin main:deploy
+git switch deploy && git merge main && git push origin deploy
 ```
+
+`main` alone can't be pushed to `deploy`: after the rebase onto upstream, `deploy` carries a merge
+commit that `main` doesn't have, so `git push origin main:deploy` is rejected as non-fast-forward.
+The merge keeps `deploy`'s tree identical to `main`.
 
 | File                                | Goes to                                                                               |
 |-------------------------------------|---------------------------------------------------------------------------------------|
@@ -31,7 +35,7 @@ or secrets belong in this repo.
 
 ## 1. User, clone, dependencies
 
-Create the `deploy` branch on GitHub once, from your machine: `git push origin main:deploy`.
+Create the `deploy` branch on GitHub once, from your machine: `git push origin main:deploy` (only the very first time, before `deploy` has its own merge commits).
 
 ```sh
 sudo apt install webhook git
@@ -143,7 +147,7 @@ and so do pushes to any branch other than `deploy`.
 
 ## 7. Check that a deploy arrived and ran
 
-Run `git push origin main:deploy`, then check three places.
+Run `git push origin deploy`, then check three places.
 
 **GitHub — did it arrive?** Repo → Settings → Webhooks → the hook → *Recent Deliveries*.
 *Redeliver* resends a delivery without a new push.
@@ -178,7 +182,7 @@ time should be just after the push.
 ## Operating
 
 * Manual deploy: `sudo -u iicu-mcp -H /opt/intervals-icu-mcp/app/deploy/deploy.sh`
-* Roll back: `git revert` on `main`, then `git push origin main:deploy`. Emergency only: `git push
+* Roll back: `git revert` on `main`, then merge `main` into `deploy` and `git push origin deploy`. Emergency only: `git push
   --force origin <good-sha>:deploy` as repo admin (bypasses the ruleset); then run `git reset --hard
   origin/deploy` in the VPS clone, since `deploy.sh` refuses non-fast-forwards.
 * `deploy.sh` only fast-forwards. Local edits on the VPS make it fail loudly instead of being
@@ -189,4 +193,4 @@ time should be just after the push.
   on `deploy` (only the repo admin may push, no force pushes) stay on. `main` needs none: it
   deploys nothing.
 * Claude Code sessions on the dev machine are blocked from pushing `deploy` by a local pre-push hook
-  plus deny rules; releasing is always a human `git push origin main:deploy`.
+  plus deny rules; releasing is always a human `git push origin deploy`.
