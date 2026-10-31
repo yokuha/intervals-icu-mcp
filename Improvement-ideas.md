@@ -55,3 +55,28 @@ whole activity), while the raw RR intervals in the `hrv` stream are complete. Th
 the server, but a helper or tool that computes DFA-α1 from the `hrv` stream (e.g. 120 s window,
 box sizes 4–16 beats) would make threshold analysis possible in that case.
 I believe Marco Altini has [code for this](https://colab.research.google.com/drive/1GUZVjZGhc2_JqV-J5m1mgbvbiTBV9WzZ?usp=sharing#scrollTo=dPto519o_Cq1).
+
+
+## Documentation
+
+### Running the server in the cloud (VPS) as general documentation
+
+`docs/remote-deployment.md` explains the HTTP and SSE transports and the container liveness check,
+but not how to actually run the server on a small cloud machine (VPS) behind a public URL. That is
+the typical setup for using it from a phone app or a hosted assistant, and it needs a number of
+details that are easy to get wrong. In my fork I run it that way and documented the whole path in
+`deploy/README.md` (fork only so far). The parts that are not specific to my setup could become a
+general "Running on a VPS" guide:
+
+* A dedicated system user, the clone under `/opt`, `uv sync`, and the credentials in an environment
+  file that only the service can read.
+* A systemd unit for the server, plus a narrow `sudoers` rule that allows exactly one restart.
+* A reverse proxy (Caddy) with TLS and a secret path segment in front of the MCP endpoint, since the
+  endpoint has no authentication of its own.
+* Optional: redeploying on every push to a `deploy` branch via a GitHub webhook, and how to check
+  that a deploy arrived and ran (webhook deliveries, `journalctl`, the commit on the server).
+* How to roll back, and that a plain restart does not pick up changes to the unit files.
+
+Suggestion: a section or page "Running on a VPS" in `docs/` that links from the README, using
+placeholders instead of my host names. I can send the PR once there is interest in the topic; see
+the discussion at https://github.com/hhopke/intervals-icu-mcp/discussions/166.
