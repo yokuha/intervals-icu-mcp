@@ -78,5 +78,6 @@ general "Running on a VPS" guide:
 * How to roll back, and that a plain restart does not pick up changes to the unit files.
 
 Suggestion: a section or page "Running on a VPS" in `docs/` that links from the README, using
-placeholders instead of my host names. I can send the PR once there is interest in the topic; see
-the discussion at https://github.com/hhopke/intervals-icu-mcp/discussions/166.
+placeholders instead of my host names. I can send the PR with a bit more time and consolidation; see
+the discussion at https://github.com/hhopke/intervals-icu-mcp/discussions/166 and feel free to
+provide further input.
