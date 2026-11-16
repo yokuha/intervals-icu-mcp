@@ -8,7 +8,9 @@ from fastmcp import Context
 from ..auth import ICUConfig
 from ..client import ICUAPIError, ICUClient
 from ..response_builder import ResponseBuilder
+from ._intensity import intensity_factor
 from ._strava import strava_limitation_note
+from ._weather import weather_block
 
 
 def _summarize_activity(activity: Any) -> dict[str, Any]:
@@ -47,7 +49,7 @@ def _summarize_activity(activity: Any) -> dict[str, Any]:
     if activity.icu_training_load:
         item["training_load"] = activity.icu_training_load
     if activity.icu_intensity:
-        item["intensity_factor"] = activity.icu_intensity
+        item["intensity_factor"] = intensity_factor(activity.icu_intensity)
 
     return item
 
@@ -235,7 +237,7 @@ async def get_activity_details(
             if activity.icu_training_load:
                 training_metrics["training_load"] = activity.icu_training_load
             if activity.icu_intensity:
-                training_metrics["intensity_factor"] = activity.icu_intensity
+                training_metrics["intensity_factor"] = intensity_factor(activity.icu_intensity)
             if activity.tss:
                 training_metrics["tss"] = round(activity.tss, 0)
             if activity.hrss:
@@ -264,6 +266,10 @@ async def get_activity_details(
                 subjective["rpe"] = activity.perceived_exertion
             if subjective:
                 activity_data["subjective"] = subjective
+
+            weather = weather_block(activity)
+            if weather:
+                activity_data["weather"] = weather
 
             # Other info
             other_info: dict[str, Any] = {}
@@ -752,7 +758,11 @@ async def search_activities_full(
                 if activity.icu_training_load:
                     activity_item["training_load"] = activity.icu_training_load
                 if activity.icu_intensity:
-                    activity_item["intensity_factor"] = activity.icu_intensity
+                    activity_item["intensity_factor"] = intensity_factor(activity.icu_intensity)
+
+                weather = weather_block(activity)
+                if weather:
+                    activity_item["weather"] = weather
 
                 activities_data.append(activity_item)
 
