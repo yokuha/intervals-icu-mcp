@@ -81,3 +81,29 @@ Suggestion: a section or page "Running on a VPS" in `docs/` that links from the 
 placeholders instead of my host names. I can send the PR with a bit more time and consolidation; see
 the discussion at https://github.com/hhopke/intervals-icu-mcp/discussions/166 and feel free to
 provide further input.
+
+
+## Automation
+
+### Detecting commutes and setting name/flags from location data
+
+Idea: classify new activities as commutes automatically by checking the start and end position of
+the GPS data against saved places, similar to the "location check" rules of activityfix for Strava.
+A rule is two places with a radius each (e.g. 500 m and 1000 m); the direction decides the title.
+Example rule: start within 1000 m of place A and end within 500 m of place B, then set the commute
+flag, add the tag `commute` and set a title. If only one place (e.g. home) matches at the start or
+end, rename the activity to "commute" and set the flags. Tested by hand on two rides on 2026-11-03.
+
+What is missing or impractical in the server for this:
+
+* Start/end position as its own call: `icu_get_activity_streams` always returns all streams at once
+  (one value per second and stream), and I found no way to request only `latlng`. A tool or
+  parameter for the first and last coordinate (optionally the distance to a given point) would be
+  enough.
+* `icu_update_activity` has no gear field: `gear_id` and `gear` were rejected as unexpected
+  keyword arguments. Without it, the bike cannot be set by the same automation.
+* The FIT file of an Apple Watch ride lists only the watch as device, no power meter and no bike,
+  so the bike cannot be derived from the file itself; it has to come from gear or location.
+
+Suggestion: add the start/end position call and the gear field first. The rule logic itself can
+live in a scheduled job on top of the tools.
